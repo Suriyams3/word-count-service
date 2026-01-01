@@ -12,12 +12,10 @@ import java.util.List;
 
 public class WordCountApp {
     public static void main(String[] args) {
-        // Initialize Spark Session
         SparkSession spark = SparkSession.builder()
                 .appName("JavaSparkWordCount")
                 .getOrCreate();
 
-        // 1. Create sample data
         List<String> data = Arrays.asList(
                 "Flyte handles workflows",
                 "Spark handles data",
@@ -26,21 +24,17 @@ public class WordCountApp {
 
         Dataset<String> df = spark.createDataset(data, Encoders.STRING());
 
-        // 2. Define the FlatMapFunction explicitly to avoid ambiguity errors
         FlatMapFunction<String, String> splitWords = s ->
                 Arrays.asList(s.toLowerCase().split(" ")).iterator();
 
-        // 3. Transformation Logic
         Dataset<Row> counts = df
                 .flatMap(splitWords, Encoders.STRING())
-                .filter(s -> !s.isEmpty())
+                .filter((String s) -> !s.isEmpty()) // Explicit type fixes ambiguity
                 .groupBy("value")
                 .count()
                 .orderBy(desc("count"));
 
-        // 4. Output result to console
         counts.show();
-
         spark.stop();
     }
 }
